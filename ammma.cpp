@@ -33,6 +33,8 @@
 #define BG_YELLOW  "\033[43m"
 #define BG_BOLD_RED    "\033[1m\033[41m"
 
+#define IN_EQ_ANS (in=="answer" || in == "ans" || in == (std::string)"a")
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -92,7 +94,7 @@ void printFormattedGuess(const std::string &guess, const std::string &answer, bo
 
     //printing answer (in all red)
     if(printingAnswer) {
-        for(int i = 0; i < answer.size(); ++i) {
+        for(size_t i = 0; i < answer.size(); ++i) {
             char c = answer[i];
             printf("%s %c ", BG_BOLD_RED, c-32);
         }
@@ -101,12 +103,12 @@ void printFormattedGuess(const std::string &guess, const std::string &answer, bo
     }
 
     //printing wordle
-    for(int i = 0; i < guess.size(); ++i) {
+    for(size_t i = 0; i < guess.size(); ++i) {
         char c = guess[i];
 
         if(c == answer[i]) {
             printf("%s %c ", BG_GREEN , c-32);
-        } else if (answer.find(c) != -1) {
+        } else if ((int)answer.find(c) != -1) {
             printf("%s %c ", BG_YELLOW , c-32);
         } else {
             printf("%s %c ", BG_GRAY , c-32);
@@ -149,8 +151,8 @@ int main(int argc, char* argv[]) {
 
             readWord(&in);
             while(in != answer) {
-                //display the answer and end the current Wordle
-                if(in == "answer") {
+                //if commanded, display the answer and end the current Wordle
+                if(IN_EQ_ANS) {
                     printf("%s%s%s", CURSORUP, ERASELINE, FG_BOLD_WHITE);
                     printFormattedGuess(in, answer, true);
                     break;
@@ -163,12 +165,14 @@ int main(int argc, char* argv[]) {
                     printf("%s>>%s %s %sis not a valid word.\n%s", FG_RED, FG_RESET, in.c_str(), FG_RED, FG_RESET);
                     readWord(&in);
 
-                    if(in == "answer") break;
+                    if(IN_EQ_ANS) break;
                     
                     printf("%s%s%s%s\r", ERASELINE, CURSORUP, ERASELINE, ERASELINE); //delete error message and new entered word
                 }
+
+                //display the guess, or the answer if commanded
                 printf("%s%s%s", CURSORUP, ERASELINE, FG_BOLD_WHITE);
-                printFormattedGuess(in, answer);
+                printFormattedGuess(in, answer, IN_EQ_ANS);
 
                 readWord(&in);
             }
