@@ -3,6 +3,9 @@
 //TODO: custom word lengths
 //TODO: help page
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 #include <algorithm>
 #include <fstream>
 #include <ios>
@@ -12,26 +15,26 @@
 #include <string>
 #include <vector>
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+#define CURSORUP   "\033[A"
+#define ERASELINE  "\33[2K"
 
 #define FG_RESET   "\033[0m"
-#define BG_RESET   "\033[40m"
-
-#define FG_BLACK   "\033[30m"
 #define FG_RED     "\033[31m"
 #define FG_GREEN   "\033[32m"
 #define FG_YELLOW  "\033[33m"
-#define FG_WHITE   "\033[37m"
-#define FG_GRAY    "\033[37m"
+#define FG_BOLD_WHITE  "\033[1m\033[37m"
 
+#define BG_RESET   "\033[40m"
 #define BG_GRAY    "\033[100m"
 #define BG_GREEN   "\033[42m"
 #define BG_YELLOW  "\033[43m"
-#define BG_WHITE   "\033[47m"
+#define BG_BOLD_RED    "\033[1m\033[41m"
 
-#define FG_BOLD_BLACK   "\033[1m\033[30m" 
-#define FG_BOLD_WHITE   "\033[1m\033[37m"
-#define BG_BOLD_RED     "\033[1m\033[41m"
-
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //reads each line from the file at dictname into dict as elements
 //throws std::runtime_error if the file at dictname doesn't exist
@@ -60,11 +63,13 @@ void readDict(std::vector<std::string>* dict, std::string dictname) {
 
 //reads a line from cin, throwing a runtime error to quit the program if asked
 void readWord(std::string* word) {
-    std::string in;
     printf("%s>> %s", FG_GREEN, FG_RESET);
-    std::cin >> in;
-    std::transform(in.begin(), in.end(), in.begin(), ::tolower);
 
+    std::string in;
+    std::cin >> in;
+    std::transform(in.begin(), in.end(), in.begin(), ::tolower); //convert input to lowercase
+
+    //quit ammma
     if(in == "q" || in == "quit") {
         throw std::runtime_error("quit");
     }
@@ -85,7 +90,7 @@ bool validWord(const std::string &word, const std::vector<std::string> &dict) {
 void printFormattedGuess(const std::string &guess, const std::string &answer, bool printingAnswer = false) {
     printf("   ");
 
-    //printing answer
+    //printing answer (in all red)
     if(printingAnswer) {
         for(int i = 0; i < answer.size(); ++i) {
             char c = answer[i];
@@ -111,6 +116,9 @@ void printFormattedGuess(const std::string &guess, const std::string &answer, bo
     printf("%s\n", BG_RESET);
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 int main(int argc, char* argv[]) {
     srand(time(0));
     std::vector<std::string> dict = std::vector<std::string>();
@@ -129,21 +137,26 @@ int main(int argc, char* argv[]) {
 
     printf("AMMMA found %s%d%s words in the dictionary!\n", FG_GREEN, (int)dict.size(), FG_RESET);
 
+    //core loop, each iteration has a new Wordle. 
+    //loop breaks when entering a quit command throws a runtime_error
     bool gameLoop = true;
     while(gameLoop) {
         try {
             std::string in = "";
             std::string answer = dict[rand() % dict.size()-1];
+
             std::cout << "\n-----------------------------------------------\nStart your game by typing any five letter word:\n\n";
 
             readWord(&in);
             while(in != answer) {
+                //display the answer and end the current Wordle
                 if(in == "answer") {
-                    printf("\033[A\33[2K%s", FG_BOLD_WHITE);
+                    printf("%s%s%s", CURSORUP, ERASELINE, FG_BOLD_WHITE);
                     printFormattedGuess(in, answer, true);
                     break;
                 }
 
+                //if entered word is invalid, request a new one
                 while(!validWord(in, dict)) {
                     printf("\033[A\33[2K\r"); //delete invalid entered word
 
@@ -152,24 +165,20 @@ int main(int argc, char* argv[]) {
 
                     if(in == "answer") break;
                     
-                    printf("\33[2K\033[A\33[2K\33[2K\r"); //delete error message and new entered word
+                    printf("%s%s%s%s\r", ERASELINE, CURSORUP, ERASELINE, ERASELINE); //delete error message and new entered word
                 }
-                printf("\033[A\33[2K%s", FG_BOLD_WHITE);
+                printf("%s%s%s", CURSORUP, ERASELINE, FG_BOLD_WHITE);
                 printFormattedGuess(in, answer);
 
                 readWord(&in);
             }
             if(in == answer) {
-                printf("\033[A\33[2K%s", FG_BOLD_WHITE);
+                printf("%s%s%s", CURSORUP, ERASELINE, FG_BOLD_WHITE);
                 printFormattedGuess(in, answer);
             }
 
         } catch (const std::runtime_error& err) {break;};
     }
 
-
-
     return 0;
 }
-
-
